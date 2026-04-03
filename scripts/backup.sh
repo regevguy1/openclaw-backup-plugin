@@ -151,11 +151,16 @@ SECRET_PATTERNS='ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]
 # Function to check if a path should be encrypted
 should_encrypt() {
     local rel_path="$1"
+    local filename
+    filename=$(basename "$rel_path")
+    
     for pattern in "${ENCRYPT_PATTERNS[@]}"; do
+        # Directory-style patterns (e.g., ".secrets")
         if [[ "$rel_path" == "$pattern" || "$rel_path" == "$pattern"/* || "$rel_path" == *"/$pattern" || "$rel_path" == *"/$pattern"/* ]]; then
             return 0
         fi
-        if [[ "$rel_path" == $pattern ]]; then
+        # Filename glob patterns (e.g., ".env", ".env.*") — match anywhere in tree
+        if [[ "$filename" == $pattern ]]; then
             return 0
         fi
     done
