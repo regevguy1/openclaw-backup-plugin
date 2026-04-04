@@ -339,7 +339,13 @@ while IFS= read -r -d '' file; do
             cp "$file" "$PROFILE_DIR/$rel_path"
         fi
     fi
-done < <(find . -type f -print0)
+done < <(find . \
+    -name ".git" -prune -o \
+    -name "node_modules" -prune -o \
+    -name "__pycache__" -prune -o \
+    -name ".cache" -prune -o \
+    -name "services" -prune -o \
+    -type f -print0)
 
 echo ""
 echo "📊 Summary:"
