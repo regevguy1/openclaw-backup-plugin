@@ -146,7 +146,9 @@ MAX_FILE_SIZE=$((50 * 1024 * 1024))
 SKIPPED_LARGE=0
 
 # Secret patterns to detect (forces encryption if found in plain files)
-SECRET_PATTERNS='ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{80,}|sk-[A-Za-z0-9]{20,}|vcp_[A-Za-z0-9]{50,}|xoxb-[A-Za-z0-9-]+'
+# Covers: GitHub tokens, OpenAI/Anthropic keys, Slack tokens, Google API keys,
+# Bearer tokens, JWTs, monday.com API tokens, Ahrefs/generic API keys
+SECRET_PATTERNS='ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{80,}|sk-[A-Za-z0-9]{20,}|vcp_[A-Za-z0-9]{50,}|xoxb-[A-Za-z0-9-]+|AIzaSy[A-Za-z0-9_-]{33}|Bearer [A-Za-z0-9._/+=+-]{40,}|eyJhbGciOi[A-Za-z0-9_.+/=-]{50,}|AKIA[A-Z0-9]{16}|sk-ant-[A-Za-z0-9-]{20,}|tvly-[A-Za-z0-9]{20,}|pplx-[A-Za-z0-9]{20,}|jbky\.[A-Za-z0-9_.+/=-]{20,}'
 
 # Function to check if a path should be encrypted
 should_encrypt() {
