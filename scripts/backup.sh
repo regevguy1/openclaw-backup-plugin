@@ -288,6 +288,29 @@ fi
 # Load .backupignore from workspace
 load_backupignore "$WORKSPACE"
 
+# Build find-prune args from DEFAULT_EXCLUDE_PATTERNS + BACKUPIGNORE_DIRS
+# This skips entire directory trees at the filesystem level (massive perf win)
+FIND_PRUNE_ARGS=()
+for pattern in "${DEFAULT_EXCLUDE_PATTERNS[@]}"; do
+    FIND_PRUNE_ARGS+=(-name "$pattern" -prune -o)
+done
+for dir in "${BACKUPIGNORE_DIRS[@]+"${BACKUPIGNORE_DIRS[@]}"}"; do
+    FIND_PRUNE_ARGS+=(-name "$dir" -prune -o)
+done
+# Deduplicate (in case .backupignore repeats a default) — bash 3 compatible
+DEDUPED_PRUNE=()
+_seen_names=""
+for ((i=0; i<${#FIND_PRUNE_ARGS[@]}; i+=4)); do
+    key="${FIND_PRUNE_ARGS[i+1]}"
+    case "$_seen_names" in
+        *"|$key|"*) ;; # already seen
+        *)
+            _seen_names="$_seen_names|$key|"
+            DEDUPED_PRUNE+=("${FIND_PRUNE_ARGS[@]:i:4}")
+            ;;
+    esac
+done
+
 # Process workspace files
 echo "📋 Scanning workspace..."
 
@@ -295,7 +318,7 @@ cd "$WORKSPACE"
 while IFS= read -r -d '' file; do
     rel_path="${file#./}"
     
-    # Skip excluded patterns
+    # Skip excluded patterns (catches extensions + patterns not handled by prune)
     if should_exclude "$rel_path"; then
         continue
     fi
@@ -339,13 +362,7 @@ while IFS= read -r -d '' file; do
             cp "$file" "$PROFILE_DIR/$rel_path"
         fi
     fi
-done < <(find . \
-    -name ".git" -prune -o \
-    -name "node_modules" -prune -o \
-    -name "__pycache__" -prune -o \
-    -name ".cache" -prune -o \
-    -name "services" -prune -o \
-    -type f -print0)
+done < <(find . "${DEDUPED_PRUNE[@]}" -type f -print0)
 
 echo ""
 echo "📊 Summary:"
